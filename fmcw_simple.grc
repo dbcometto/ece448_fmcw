@@ -214,7 +214,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: 15e6
+    value: int(4e6)
   states:
     bus_sink: false
     bus_source: false
@@ -226,7 +226,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: '0.00003'
+    value: '0.0001'
   states:
     bus_sink: false
     bus_source: false

@@ -1,0 +1,11 @@
+This file includes the descriptions of the chirp files in ./chirps
+
+chirp1.dat
+SR: 7Msps
+BW: +-0.4*SR = 5.6MHz
+T = 40us
+
+chirp2.dat
+SR: 4Msps
+BW +-0.4*SR = 3.2MHz
+T = 40us

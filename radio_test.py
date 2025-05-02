@@ -5,7 +5,8 @@
 # SPDX-License-Identifier: GPL-3.0
 #
 # GNU Radio Python Flow Graph
-# Title: Not titled yet
+# Title: USRP B210 Radio Test
+# Author: Ben Cometto
 # GNU Radio version: 3.10.10.0
 
 from PyQt5 import Qt
@@ -29,9 +30,9 @@ import sip
 class radio_test(gr.top_block, Qt.QWidget):
 
     def __init__(self):
-        gr.top_block.__init__(self, "Not titled yet", catch_exceptions=True)
+        gr.top_block.__init__(self, "USRP B210 Radio Test", catch_exceptions=True)
         Qt.QWidget.__init__(self)
-        self.setWindowTitle("Not titled yet")
+        self.setWindowTitle("USRP B210 Radio Test")
         qtgui.util.check_set_qss()
         try:
             self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
@@ -61,7 +62,7 @@ class radio_test(gr.top_block, Qt.QWidget):
         ##################################################
         # Variables
         ##################################################
-        self.samp_rate = samp_rate = 35e6
+        self.samp_rate = samp_rate = 17e6
 
         ##################################################
         # Blocks
@@ -80,7 +81,7 @@ class radio_test(gr.top_block, Qt.QWidget):
 
         self.uhd_usrp_source_0.set_center_freq(1e9, 0)
         self.uhd_usrp_source_0.set_antenna("RX2", 0)
-        self.uhd_usrp_source_0.set_gain(50, 0)
+        self.uhd_usrp_source_0.set_gain(60, 0)
         self.uhd_usrp_sink_0 = uhd.usrp_sink(
             ",".join(("", '')),
             uhd.stream_args(
@@ -95,7 +96,7 @@ class radio_test(gr.top_block, Qt.QWidget):
 
         self.uhd_usrp_sink_0.set_center_freq(1e9, 0)
         self.uhd_usrp_sink_0.set_antenna("TX/RX", 0)
-        self.uhd_usrp_sink_0.set_gain(20, 0)
+        self.uhd_usrp_sink_0.set_gain(40, 0)
         self.qtgui_freq_sink_x_0_0 = qtgui.freq_sink_c(
             1024, #size
             window.WIN_BLACKMAN_hARRIS, #wintype
