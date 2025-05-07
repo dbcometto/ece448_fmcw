@@ -72,8 +72,8 @@ class fmcw_sim(gr.top_block, Qt.QWidget):
         self.min_freq = min_freq = -max_freq
         self.k_bins = k_bins = 2**19
         self.c = c = 300000000
-        self.radio_tx_gain = radio_tx_gain = 20
-        self.radio_rx_gain = radio_rx_gain = 36
+        self.radio_tx_gain = radio_tx_gain = 30
+        self.radio_rx_gain = radio_rx_gain = 50
         self.radio_center = radio_center = 1e9
         self.min_buffer = min_buffer = 1000
         self.max_buffer = max_buffer = 8192
@@ -87,9 +87,6 @@ class fmcw_sim(gr.top_block, Qt.QWidget):
         # Blocks
         ##################################################
 
-        self._calibration_delay_range = qtgui.Range(0, 800, 1, 0, 200)
-        self._calibration_delay_win = qtgui.RangeWidget(self._calibration_delay_range, self.set_calibration_delay, "'calibration_delay'", "counter_slider", int, QtCore.Qt.Horizontal)
-        self.top_layout.addWidget(self._calibration_delay_win)
         self.uhd_usrp_source_0 = uhd.usrp_source(
             ",".join(("", '')),
             uhd.stream_args(
@@ -213,15 +210,16 @@ class fmcw_sim(gr.top_block, Qt.QWidget):
         self._qtgui_freq_sink_x_0_0_win = sip.wrapinstance(self.qtgui_freq_sink_x_0_0.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_freq_sink_x_0_0_win)
         self.fft_vxx_0_0 = fft.fft_vcc(k_bins, True, window.blackmanharris(k_bins), False, 2)
+        self._calibration_delay_range = qtgui.Range(0, 800, 1, 0, 200)
+        self._calibration_delay_win = qtgui.RangeWidget(self._calibration_delay_range, self.set_calibration_delay, "'calibration_delay'", "counter_slider", int, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._calibration_delay_win)
         self.blocks_stream_to_vector_0_0 = blocks.stream_to_vector(gr.sizeof_gr_complex*1, k_bins)
         self.blocks_short_to_float_0 = blocks.short_to_float(1, 1)
         self.blocks_null_sink_0 = blocks.null_sink(gr.sizeof_short*1)
         self.blocks_multiply_const_vxx_1_0 = blocks.multiply_const_ff((c/2/alpha))
         self.blocks_multiply_const_vxx_1 = blocks.multiply_const_ff((1*df))
-        self.blocks_multiply_conjugate_cc_0 = blocks.multiply_conjugate_cc(1)
         self.blocks_file_source_0 = blocks.file_source(gr.sizeof_gr_complex*1, 'C:\\workspace\\ece448_fmcw\\chirps\\chirp2.dat', True, 0, 0)
         self.blocks_file_source_0.set_begin_tag(pmt.PMT_NIL)
-        self.blocks_delay_0 = blocks.delay(gr.sizeof_gr_complex*1, calibration_delay)
         self.blocks_complex_to_mag_squared_0 = blocks.complex_to_mag_squared(k_bins)
         self.blocks_argmax_xx_1 = blocks.argmax_fs(k_bins)
 
@@ -232,17 +230,14 @@ class fmcw_sim(gr.top_block, Qt.QWidget):
         self.connect((self.blocks_argmax_xx_1, 1), (self.blocks_null_sink_0, 0))
         self.connect((self.blocks_argmax_xx_1, 0), (self.blocks_short_to_float_0, 0))
         self.connect((self.blocks_complex_to_mag_squared_0, 0), (self.blocks_argmax_xx_1, 0))
-        self.connect((self.blocks_delay_0, 0), (self.blocks_multiply_conjugate_cc_0, 0))
-        self.connect((self.blocks_file_source_0, 0), (self.blocks_delay_0, 0))
         self.connect((self.blocks_file_source_0, 0), (self.uhd_usrp_sink_0, 0))
-        self.connect((self.blocks_multiply_conjugate_cc_0, 0), (self.blocks_stream_to_vector_0_0, 0))
-        self.connect((self.blocks_multiply_conjugate_cc_0, 0), (self.qtgui_freq_sink_x_0_0, 0))
         self.connect((self.blocks_multiply_const_vxx_1, 0), (self.blocks_multiply_const_vxx_1_0, 0))
         self.connect((self.blocks_multiply_const_vxx_1_0, 0), (self.qtgui_number_sink_0_0, 0))
         self.connect((self.blocks_short_to_float_0, 0), (self.blocks_multiply_const_vxx_1, 0))
         self.connect((self.blocks_stream_to_vector_0_0, 0), (self.fft_vxx_0_0, 0))
         self.connect((self.fft_vxx_0_0, 0), (self.blocks_complex_to_mag_squared_0, 0))
-        self.connect((self.uhd_usrp_source_0, 0), (self.blocks_multiply_conjugate_cc_0, 1))
+        self.connect((self.uhd_usrp_source_0, 0), (self.blocks_stream_to_vector_0_0, 0))
+        self.connect((self.uhd_usrp_source_0, 0), (self.qtgui_freq_sink_x_0_0, 0))
 
 
     def closeEvent(self, event):
@@ -360,7 +355,6 @@ class fmcw_sim(gr.top_block, Qt.QWidget):
 
     def set_calibration_delay(self, calibration_delay):
         self.calibration_delay = calibration_delay
-        self.blocks_delay_0.set_dly(int(self.calibration_delay))
 
     def get_alpha(self):
         return self.alpha
