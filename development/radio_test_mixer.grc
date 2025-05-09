@@ -55,7 +55,7 @@ blocks:
   id: variable
   parameters:
     comment: ''
-    value: 17e6
+    value: 10e6
   states:
     bus_sink: false
     bus_source: false
@@ -161,7 +161,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [912, 320.0]
+    coordinate: [912, 328.0]
     rotation: 0
     state: enabled
 - name: qtgui_freq_sink_x_0
@@ -780,7 +780,7 @@ blocks:
     dc_offs_enb9: default
     dev_addr: '""'
     dev_args: ''
-    gain0: '40'
+    gain0: '30'
     gain1: '40'
     gain10: '0'
     gain11: '0'
