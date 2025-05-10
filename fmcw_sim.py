@@ -78,6 +78,7 @@ class fmcw_sim(gr.top_block, Qt.QWidget):
         self.delay_time = delay_time = 2*distance_m/c
         self.decimation = decimation = round(samp_rate/max_fbeat)
         self.reflection_amplitude = reflection_amplitude = 0.75
+        self.noise_amplitude = noise_amplitude = 8.4
         self.f_b_ideal = f_b_ideal = 2*distance_m*alpha/c
         self.distance_per_sample = distance_per_sample = c/samp_rate
         self.distance_max_m = distance_max_m = 200
@@ -89,6 +90,9 @@ class fmcw_sim(gr.top_block, Qt.QWidget):
         # Blocks
         ##################################################
 
+        self._noise_amplitude_range = qtgui.Range(0, 10, 0.1, 8.4, 200)
+        self._noise_amplitude_win = qtgui.RangeWidget(self._noise_amplitude_range, self.set_noise_amplitude, "Noise Level", "counter_slider", float, QtCore.Qt.Horizontal)
+        self.top_layout.addWidget(self._noise_amplitude_win)
         self.zeromq_pub_sink_0 = zeromq.pub_sink(gr.sizeof_gr_complex, 1, 'tcp://localhost:4444', 100, False, (-1), '', True, True)
         self.qtgui_freq_sink_x_0_0 = qtgui.freq_sink_c(
             2048, #size
@@ -132,7 +136,7 @@ class fmcw_sim(gr.top_block, Qt.QWidget):
 
         self._qtgui_freq_sink_x_0_0_win = sip.wrapinstance(self.qtgui_freq_sink_x_0_0.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_freq_sink_x_0_0_win)
-        self.fir_filter_xxx_0 = filter.fir_filter_ccc(decimation, dec_lpf_taps)
+        self.fir_filter_xxx_0 = filter.fir_filter_ccc(1, [1])
         self.fir_filter_xxx_0.declare_sample_delay(0)
         self._distance_m_range = qtgui.Range(0, distance_max_m, 0.25, 100, 200)
         self._distance_m_win = qtgui.RangeWidget(self._distance_m_range, self.set_distance_m, "Object Distance", "counter_slider", float, QtCore.Qt.Horizontal)
@@ -143,20 +147,24 @@ class fmcw_sim(gr.top_block, Qt.QWidget):
         self.blocks_multiply_const_vxx_0 = blocks.multiply_const_ff(((max_freq-min_freq)))
         self.blocks_multiply_conjugate_cc_0 = blocks.multiply_conjugate_cc(1)
         self.blocks_delay_0 = blocks.delay(gr.sizeof_gr_complex*1, delay_samples)
+        self.blocks_add_xx_0 = blocks.add_vcc(1)
         self.blocks_add_const_vxx_0 = blocks.add_const_ff(min_freq)
         self.analog_sig_source_x_0 = analog.sig_source_f(samp_rate, analog.GR_SAW_WAVE, (1/t_chirp), 1, 0, 0)
+        self.analog_noise_source_x_0 = analog.noise_source_c(analog.GR_GAUSSIAN, noise_amplitude, 0)
 
 
         ##################################################
         # Connections
         ##################################################
+        self.connect((self.analog_noise_source_x_0, 0), (self.blocks_add_xx_0, 1))
         self.connect((self.analog_sig_source_x_0, 0), (self.blocks_throttle2_0, 0))
         self.connect((self.blocks_add_const_vxx_0, 0), (self.blocks_vco_c_0, 0))
+        self.connect((self.blocks_add_xx_0, 0), (self.blocks_multiply_conjugate_cc_0, 1))
         self.connect((self.blocks_delay_0, 0), (self.blocks_multiply_const_vxx_2, 0))
         self.connect((self.blocks_multiply_conjugate_cc_0, 0), (self.fir_filter_xxx_0, 0))
         self.connect((self.blocks_multiply_conjugate_cc_0, 0), (self.qtgui_freq_sink_x_0_0, 0))
         self.connect((self.blocks_multiply_const_vxx_0, 0), (self.blocks_add_const_vxx_0, 0))
-        self.connect((self.blocks_multiply_const_vxx_2, 0), (self.blocks_multiply_conjugate_cc_0, 1))
+        self.connect((self.blocks_multiply_const_vxx_2, 0), (self.blocks_add_xx_0, 0))
         self.connect((self.blocks_throttle2_0, 0), (self.blocks_multiply_const_vxx_0, 0))
         self.connect((self.blocks_vco_c_0, 0), (self.blocks_delay_0, 0))
         self.connect((self.blocks_vco_c_0, 0), (self.blocks_multiply_conjugate_cc_0, 0))
@@ -282,6 +290,13 @@ class fmcw_sim(gr.top_block, Qt.QWidget):
         self.reflection_amplitude = reflection_amplitude
         self.blocks_multiply_const_vxx_2.set_k(self.reflection_amplitude)
 
+    def get_noise_amplitude(self):
+        return self.noise_amplitude
+
+    def set_noise_amplitude(self, noise_amplitude):
+        self.noise_amplitude = noise_amplitude
+        self.analog_noise_source_x_0.set_amplitude(self.noise_amplitude)
+
     def get_f_b_ideal(self):
         return self.f_b_ideal
 
@@ -318,7 +333,6 @@ class fmcw_sim(gr.top_block, Qt.QWidget):
 
     def set_dec_lpf_taps(self, dec_lpf_taps):
         self.dec_lpf_taps = dec_lpf_taps
-        self.fir_filter_xxx_0.set_taps(self.dec_lpf_taps)
 
 
 
